@@ -1,5 +1,11 @@
+from datetime import datetime
 from libcamera import Transform
+from os import path
 from picamera2 import Picamera2, Preview
+from picamera2.encoders import H264Encoder, Quality
+
+# Constants
+dt_fmt: str = '%d-%m-%y[%H:%M:%S]'
 
 # Crop Regions
 mid_screen: tuple[int, int, int, int]  = (0, 0, 1920, 1080)
@@ -38,9 +44,10 @@ resolution_modes: dict[str, dict] = {
         
 class Camera:
     def __init__(self, res: str ='medium'):
-        self.config_updated: bool = False
+        self.REC: bool = False # Track recording state
         self.resolution: dict = resolution_modes[res]
         self.cam: Picamera2 = Picamera2()
+        self.encoder = H264Encoder()
         self.initialize(res)
     
     def initialize(self, res: str) -> None:
@@ -114,12 +121,26 @@ class Camera:
         self.resolution = res
         
     def record(self):
-        self.cam.start()
+        self.REC = True
+        t = datetime.now().strftime(dt_fmt)
+        self.cam.start_recording(self.encoder, 'recordings/' + t + '.h264', quality=Quality.MEDIUM)
+        print('Non-Blocking?')
         
     def stop(self):
+        if self.REC:
+            self.stop_recording()
+            
         if self.cam.started:
             self.cam.stop()
             
+    def stop_recording(self):
+        if self.REC:
+            self.cam.stop_recording()
+            self.REC = False
             
+    def simulate_button_recording(self):
+        self.record()
+        _ = input('Press button to stop recording')
+        self.stop_recording()
 if __name__ == '__main__':
     riot: Camera = Camera()
