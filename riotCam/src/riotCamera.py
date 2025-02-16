@@ -3,9 +3,13 @@ from libcamera import Transform
 from os import path
 from picamera2 import Picamera2, Preview
 from picamera2.encoders import H264Encoder, Quality
+import RPi.GPIO as GPIO
 
 # Constants
 dt_fmt: str = '%d-%m-%y[%H:%M:%S]'
+REC_BUTTON: int = 20
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(REC_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 # Crop Regions
 mid_screen: tuple[int, int, int, int]  = (0, 0, 1920, 1080)
@@ -43,7 +47,7 @@ resolution_modes: dict[str, dict] = {
     }
         
 class Camera:
-    def __init__(self, res: str ='medium'):
+    def __init__(self, res: str ='low'):
         self.REC: bool = False # Track recording state
         self.resolution: dict = resolution_modes[res]
         self.cam: Picamera2 = Picamera2()
@@ -120,11 +124,13 @@ class Camera:
         
         self.resolution = res
         
-    def record(self):
+    def record(self, path: str = None):
         self.REC = True
-        t = datetime.now().strftime(dt_fmt)
-        self.cam.start_recording(self.encoder, 'recordings/' + t + '.h264', quality=Quality.MEDIUM)
-        print('Non-Blocking?')
+        
+        if path is None:
+            path = 'recordings/' + datetime.now().strftime(dt_fmt) + '.h264'
+            
+        self.cam.start_recording(self.encoder, path, quality=Quality.MEDIUM)
         
     def stop(self):
         if self.REC:
@@ -139,8 +145,28 @@ class Camera:
             self.REC = False
             
     def simulate_button_recording(self):
-        self.record()
+        path_: str = 'recordings/' + datetime.now().strftime(dt_fmt) + '.h264'
+        self.record(path_)
+        print('Recording in progress...')
         _ = input('Press button to stop recording')
         self.stop_recording()
+        print('Recording ended')
+        
+    def button_recording(self):
+        path_: str = 'recordings/' + datetime.now().strftime(dt_fmt) + '.h264'
+        
+        while True:
+            if GPIO.input(REC_BUTTON) == GPIO.LOW and not self.REC:
+                self.record(path_)
+                print('Recording in progress...')
+                
+            _ = input('Press button to stop recording')
+            
+            if GPIO.input(REC_BUTTON) == GPIO.LOW and self.REC:
+                self.stop_recording()
+                print('Recording ended')
+                print('Breaking out of loop')
+                break
+        
 if __name__ == '__main__':
     riot: Camera = Camera()
