@@ -12,7 +12,7 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(REC_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 # Crop Regions
-mid_screen: tuple[int, int, int, int]  = (0, 0, 1920, 1080)
+mid_screen:  tuple[int, int, int, int] = (0, 0, 1920, 1080)
 full_screen: tuple[int, int, int, int] = (0, 0, 3280, 2464)
 
 resolution_modes: dict[str, dict] = {
@@ -45,17 +45,20 @@ resolution_modes: dict[str, dict] = {
       'size': (3280, 2464),
       'unpacked': 'SRGGB10'},
     }
+
+def generate_filename() -> str:
+    return datetime.now().strftime(dt_fmt) + '.h264'
         
 class Camera:
     def __init__(self, res: str ='low'):
         self.REC: bool = False # Track recording state
-        self.resolution: dict = resolution_modes[res]
         self.cam: Picamera2 = Picamera2()
-        self.encoder = H264Encoder()
         self.initialize(res)
     
     def initialize(self, res: str) -> None:
         self.set_resolution(res)
+        self.encoder = H264Encoder()
+        self.path: str = path.join(path.abspath('..'), 'data/')
         
     def set_resolution(self, res: str) -> None:
         if res == '4K':
@@ -124,13 +127,11 @@ class Camera:
         
         self.resolution = res
         
-    def record(self, path: str = None):
+    def record(self):
         self.REC = True
-        
-        if path is None:
-            path = 'recordings/' + datetime.now().strftime(dt_fmt) + '.h264'
-            
-        self.cam.start_recording(self.encoder, path, quality=Quality.MEDIUM)
+        filename: str = generate_filename()
+        fp: str = path.join(self.path, filename)
+        self.cam.start_recording(self.encoder, fp, quality=Quality.MEDIUM)
         
     def stop(self):
         if self.REC:
@@ -143,14 +144,6 @@ class Camera:
         if self.REC:
             self.cam.stop_recording()
             self.REC = False
-            
-    def simulate_button_recording(self):
-        path_: str = 'recordings/' + datetime.now().strftime(dt_fmt) + '.h264'
-        self.record(path_)
-        print('Recording in progress...')
-        _ = input('Press button to stop recording')
-        self.stop_recording()
-        print('Recording ended')
         
     def button_recording(self):
         path_: str = 'recordings/' + datetime.now().strftime(dt_fmt) + '.h264'
