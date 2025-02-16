@@ -129,8 +129,9 @@ class Camera:
         
     def record(self):
         self.REC = True
-        filename: str = path.join(self.path, generate_filename())
-        self.cam.start_recording(self.encoder, filename, quality=Quality.MEDIUM)
+        filename: str = generate_filename()
+        fp: str = path.join(self.path, filename)
+        self.cam.start_recording(self.encoder, fp, quality=Quality.MEDIUM)
         
     def stop(self):
         if self.REC:
@@ -145,11 +146,11 @@ class Camera:
             self.REC = False
         
     def button_recording(self):
-        filename: str = path.join(self.path, generate_filename())
+        path_: str = 'recordings/' + datetime.now().strftime(dt_fmt) + '.h264'
         
         while True:
             if GPIO.input(REC_BUTTON) == GPIO.LOW and not self.REC:
-                self.record(filename)
+                self.record(path_)
                 print('Recording in progress...')
                 
             _ = input('Press button to stop recording')
