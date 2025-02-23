@@ -1,7 +1,8 @@
 import wave
 import sys
 import pyaudio
-from . import helpers
+
+import src.helpers
 
 # Package level constants
 CHUNK:    int = 1024
@@ -9,9 +10,8 @@ FORMAT:   int = pyaudio.paInt16
 RATE:     int = 44100
 CHANNELS: int = 1  
 
-
 # Initialize Pyaudio
-p = pyaudio.PyAudio()
+microphone = pyaudio.PyAudio()
 target_device_name: str = 'USB PnP Sound'
 
 def find_mic_index() -> int:
@@ -25,8 +25,8 @@ def find_mic_index() -> int:
     Raises:
         Value Error: If no recording device is found
     '''
-    for i in range(p.get_device_count()):
-        if p.get_device_info_by_index(i)['name'].startswith(target_device_name):
+    for i in range(microphone.get_device_count()):
+        if microphone.get_device_info_by_index(i)['name'].startswith(target_device_name):
             return i
         
     raise ValueError('No recording device found!')
@@ -34,7 +34,7 @@ def find_mic_index() -> int:
 def record_audio(filename: str) -> tuple[pyaudio.PyAudio.Stream, wave.Wave_write]:
     '''
     Starts recording and writing audio using the globally defined
-    pyaudio object p.
+    pyaudio object microphone.
     
     Returns:
         Tuple containing relevant classes that can
@@ -43,7 +43,7 @@ def record_audio(filename: str) -> tuple[pyaudio.PyAudio.Stream, wave.Wave_write
     # Open WAV file for writing
     wf = wave.open(filename+'.wav', 'wb')
     wf.setnchannels(CHANNELS)
-    wf.setsampwidth(p.get_sample_size(FORMAT))
+    wf.setsampwidth(microphone.get_sample_size(FORMAT))
     wf.setframerate(RATE)
     
     # Callback function to write directly to the file
@@ -51,7 +51,7 @@ def record_audio(filename: str) -> tuple[pyaudio.PyAudio.Stream, wave.Wave_write
         wf.writeframes(in_data) # Write the chunk directly to the file
         return (in_data, pyaudio.paContinue)
     
-    stream = p.open(format=FORMAT,
+    stream = microphone.open(format=FORMAT,
                     channels=CHANNELS,
                     rate=RATE,
                     input=True,
@@ -64,13 +64,10 @@ def record_audio(filename: str) -> tuple[pyaudio.PyAudio.Stream, wave.Wave_write
     return (stream, wf)
 
 def stop_recording_audio(stream: pyaudio.PyAudio.Stream, wf: wave.Wave_write):
-    # Keep recording until a key is pressed
-    input('Recording in the background... Press any key to stop.')
-    
     # Clean up
     stream.stop_stream()
     stream.close()
-    p.terminate()
+    microphone.terminate()
     wf.close()
     
     print(f'Recording saved')
