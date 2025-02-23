@@ -1,13 +1,14 @@
 import wave
 import sys
 import pyaudio
+from . import helpers
 
 # Package level constants
 CHUNK:    int = 1024
 FORMAT:   int = pyaudio.paInt16
 RATE:     int = 44100
 CHANNELS: int = 1  
-FILENAME: str = 'background.wav'
+
 
 # Initialize Pyaudio
 p = pyaudio.PyAudio()
@@ -30,7 +31,7 @@ def find_mic_index() -> int:
         
     raise ValueError('No recording device found!')
 
-def record_audio() -> tuple[pyaudio.PyAudio.Stream, wave.Wave_write]:
+def record_audio(filename: str) -> tuple[pyaudio.PyAudio.Stream, wave.Wave_write]:
     '''
     Starts recording and writing audio using the globally defined
     pyaudio object p.
@@ -40,7 +41,7 @@ def record_audio() -> tuple[pyaudio.PyAudio.Stream, wave.Wave_write]:
         access the file descriptors.
     '''
     # Open WAV file for writing
-    wf = wave.open(FILENAME, 'wb')
+    wf = wave.open(filename+'.wav', 'wb')
     wf.setnchannels(CHANNELS)
     wf.setsampwidth(p.get_sample_size(FORMAT))
     wf.setframerate(RATE)
@@ -72,9 +73,9 @@ def stop_recording_audio(stream: pyaudio.PyAudio.Stream, wf: wave.Wave_write):
     p.terminate()
     wf.close()
     
-    print(f'Recording saved as: [{FILENAME}]')
+    print(f'Recording saved')
     
-stream, wf = record_audio()
+stream, wf = record_audio(helpers.generate_filename())
 stop_recording_audio(stream, wf)
     
     

@@ -1,4 +1,3 @@
-from datetime import datetime
 from libcamera import Transform
 from os import path
 from picamera2 import Picamera2, Preview
@@ -127,9 +126,8 @@ class Camera:
         
         self.resolution = res
         
-    def record(self):
+    def record(self, filename: str):
         self.REC = True
-        filename: str = generate_filename()
         fp: str = path.join(self.path, filename)
         self.cam.start_recording(self.encoder, fp, quality=Quality.MEDIUM)
         
