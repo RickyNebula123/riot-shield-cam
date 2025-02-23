@@ -2,6 +2,7 @@ import wave
 import sys
 import pyaudio
 
+# Local imports
 import helpers
 
 # Package level constants
@@ -60,20 +61,14 @@ def record_audio(filename: str) -> tuple[pyaudio.PyAudio.Stream, wave.Wave_write
                     stream_callback=audio_callback)
     #Start the stream
     audio_stream.start_stream()
-    
     return (audio_stream, wf)
 
 def stop_recording_audio(stream: pyaudio.PyAudio.Stream, wf: wave.Wave_write):
     # Clean up
     stream.stop_stream()
     stream.close()
-    microphone.terminate()
     wf.close()
-    
-    print(f'Recording saved')
-    
-audio_stream, wf = record_audio(helpers.generate_filename())
-stop_recording_audio(audio_stream, wf)
+
     
     
     
