@@ -68,9 +68,3 @@ def stop_recording_audio(stream: pyaudio.PyAudio.Stream, wf: wave.Wave_write):
     stream.stop_stream()
     stream.close()
     wf.close()
-
-    
-    
-    
-    
-
