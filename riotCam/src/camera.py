@@ -5,7 +5,6 @@ from picamera2.encoders import H264Encoder, Quality
 import RPi.GPIO as GPIO
 
 # Constants
-dt_fmt: str = '%d-%m-%y[%H:%M:%S]'
 REC_BUTTON: int = 20
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(REC_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -44,9 +43,6 @@ resolution_modes: dict[str, dict] = {
       'size': (3280, 2464),
       'unpacked': 'SRGGB10'},
     }
-
-def generate_filename() -> str:
-    return datetime.now().strftime(dt_fmt) + '.h264'
         
 class Camera:
     def __init__(self, res: str ='low'):
@@ -60,47 +56,12 @@ class Camera:
         self.path: str = path.join(path.abspath('..'), 'data/')
         
     def set_resolution(self, res: str) -> None:
-        if res == '4K':
-            self.set_resolution_4K()
-        elif res == 'medium':
-            self.set_resolution_medium()
-        elif res == 'hd':
-            self.set_resolution_hd()
-        else:
-            self.set_resolution_low()
+        if res not in resolution_modes.keys():
+            res = 'low'
+        self._set_resolution_(res)
     
-    def set_resolution_low(self) -> None:
-        res: dict = resolution_modes['low']
-        conf: dict = self.cam.create_preview_configuration(
-            transform = Transform(vflip=True),
-            sensor = {
-                'output_size': res['size'],
-                'bit_depth': res['bit_depth']})
-        
-        self.update(res, conf)
-    
-    def set_resolution_medium(self) -> None:
-        res: dict = resolution_modes['medium']
-        conf: dict = self.cam.create_preview_configuration(
-            transform = Transform(vflip=True),
-            sensor = {
-                'output_size': res['size'],
-                'bit_depth': res['bit_depth']})
-        
-        self.update(res, conf)
-        
-    def set_resolution_hd(self) -> None:
-        res: dict = resolution_modes['hd']
-        conf: dict = self.cam.create_preview_configuration(
-            transform = Transform(vflip=True),
-            sensor = {
-                'output_size': res['size'],
-                'bit_depth': res['bit_depth']})
-        
-        self.update(res, conf)
-        
-    def set_resolution_4K(self) -> None:
-        res: dict = resolution_modes['4K']
+    def _set_resolution_(self, video_res: str) -> None:
+        res: dict = resolution_modes[video_res]
         conf: dict = self.cam.create_preview_configuration(
             transform = Transform(vflip=True),
             sensor = {
@@ -110,9 +71,9 @@ class Camera:
         self.update(res, conf)
     
     def update(self, res: dict, conf: dict):
-        recording: bool = self.cam.started
+        output: bool = self.cam.started
         
-        if recording:
+        if output:
             self.cam.stop()
             
         self.cam.configure(conf)
@@ -121,7 +82,7 @@ class Camera:
         self.cam.start(show_preview=True) 
         self.cam.set_controls({'ScalerCrop': res['crop_limits']})
         
-        if not recording:
+        if not output:
             self.cam.stop()
         
         self.resolution = res
@@ -142,22 +103,12 @@ class Camera:
         if self.REC:
             self.cam.stop_recording()
             self.REC = False
-        
-    def button_recording(self):
-        path_: str = 'recordings/' + datetime.now().strftime(dt_fmt) + '.h264'
-        
-        while True:
-            if GPIO.input(REC_BUTTON) == GPIO.LOW and not self.REC:
-                self.record(path_)
-                print('Recording in progress...')
-                
-            _ = input('Press button to stop recording')
             
-            if GPIO.input(REC_BUTTON) == GPIO.LOW and self.REC:
-                self.stop_recording()
-                print('Recording ended')
-                print('Breaking out of loop')
-                break
-        
 if __name__ == '__main__':
-    riot: Camera = Camera()
+    import helpers
+    c = Camera('low')
+    c.cam.start(show_preview=True)
+    c.record(helpers.generate_filename() + '.h264')
+    
+    input('Enter any key to stop recording: >>')
+    c.stop()
