@@ -2,7 +2,7 @@ import wave
 import sys
 import pyaudio
 
-import src.helpers
+import helpers
 
 # Package level constants
 CHUNK:    int = 1024
@@ -51,7 +51,7 @@ def record_audio(filename: str) -> tuple[pyaudio.PyAudio.Stream, wave.Wave_write
         wf.writeframes(in_data) # Write the chunk directly to the file
         return (in_data, pyaudio.paContinue)
     
-    stream = microphone.open(format=FORMAT,
+    audio_stream = microphone.open(format=FORMAT,
                     channels=CHANNELS,
                     rate=RATE,
                     input=True,
@@ -59,9 +59,9 @@ def record_audio(filename: str) -> tuple[pyaudio.PyAudio.Stream, wave.Wave_write
                     input_device_index=find_mic_index(),
                     stream_callback=audio_callback)
     #Start the stream
-    stream.start_stream()
+    audio_stream.start_stream()
     
-    return (stream, wf)
+    return (audio_stream, wf)
 
 def stop_recording_audio(stream: pyaudio.PyAudio.Stream, wf: wave.Wave_write):
     # Clean up
@@ -72,8 +72,8 @@ def stop_recording_audio(stream: pyaudio.PyAudio.Stream, wf: wave.Wave_write):
     
     print(f'Recording saved')
     
-stream, wf = record_audio(helpers.generate_filename())
-stop_recording_audio(stream, wf)
+audio_stream, wf = record_audio(helpers.generate_filename())
+stop_recording_audio(audio_stream, wf)
     
     
     
