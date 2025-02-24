@@ -53,7 +53,6 @@ class Camera:
     def initialize(self, res: str) -> None:
         self.set_resolution(res)
         self.encoder = H264Encoder()
-        self.path: str = path.join(path.abspath('..'), 'data/')
         
     def set_resolution(self, res: str) -> None:
         if res not in resolution_modes.keys():
@@ -89,8 +88,7 @@ class Camera:
         
     def record(self, filename: str):
         self.REC = True
-        fp: str = path.join(self.path, filename)
-        self.cam.start_recording(self.encoder, fp, quality=Quality.MEDIUM)
+        self.cam.start_recording(self.encoder, filename + '.h264', quality=Quality.MEDIUM)
         
     def stop(self):
         if self.REC:
