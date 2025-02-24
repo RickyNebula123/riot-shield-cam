@@ -2,4 +2,4 @@ riotCam/recordings/*
 riotCam/src/__pycache__/
 riotenv/
 test/
-riotCam/data/
+riotCam/data/*
