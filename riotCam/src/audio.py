@@ -5,7 +5,7 @@ import pyaudio
 # Package level constants
 CHUNK:    int = 1024
 FORMAT:   int = pyaudio.paInt16
-RATE:     int = 44100
+RATE:     int = 48000
 CHANNELS: int = 1  
 
 class Microphone():

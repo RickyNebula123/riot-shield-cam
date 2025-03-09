@@ -1,13 +1,18 @@
 import audio
 import camera
 import helpers
+import RPi.GPIO as GPIO
 
 if __name__ == '__main__':
-    # Create camera object
-    cam = camera.Camera()
+    # Constants
+    REC_BUTTON: int = 23 # GPIO 23 will be record button
     
-    # Create microphone object
-    mic = audio.Microphone()
+    # Setup RPi board
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(REC_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    
+    # Create camera object, initialize sensor
+    cam = camera.Camera()
     
     # Generate filename
     filename = helpers.generate_filename()
@@ -16,7 +21,6 @@ if __name__ == '__main__':
     input('Press enter to start recording >>')
     
     # Start recording
-    cam.cam.start(show_preview=True)
     cam.record(filename)
     mic.record_audio(filename)
     
